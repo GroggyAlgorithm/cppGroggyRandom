@@ -41,16 +41,33 @@ static const int PermutationTable[] = {
 };
 
 
-static float FadeFloat(float t) { return (t*t*t*(t*(t*6-15)+10)); }
-static double FadeDouble(double t)  {return (t*t*t*(t*(t*6-15)+10)); }
+#pragma region STATIC_MATH
+
+
+static float FadeFloat(float t) { 
+    return (t*t*t*(t*(t*6-15)+10)); 
+}
+
+
+
+static double FadeDouble(double t)  {
+    return (t*t*t*(t*(t*6-15)+10)); 
+}
+
+
+
 static float Clamp01(float value ) {
     if( value < 0.f ) value = 0.f;
     if( value > 1.f ) value = 1.f;
     return value;
 }
+
+
+
 static float InverseLerp( float a, float b, float value ) {
     return ( value - a ) / ( b - a );
 }
+
 
 
 static float Clamp(float value, float minValue, float maxValue) {
@@ -58,12 +75,19 @@ static float Clamp(float value, float minValue, float maxValue) {
     if( value > maxValue ) value = maxValue;
     return value;
 }
+
+
+
 static float InverseLerpClamped( float a, float b, float value ) {
     return Clamp(( value - a ) / ( b - a ),a,b );
 }
+
+
+
 static float CbFloatLerp( float a, float b, float t ) {
     return ( b - a ) * t + a;
 }
+
 
 
 static double CbDoubleLerp( double a, double b, double t ) {
@@ -71,15 +95,19 @@ static double CbDoubleLerp( double a, double b, double t ) {
 }
 
 
+
 static float LerpFloatClamped( float a, float b, float t ) {
     t = Clamp01( t );
     return ( 1.f - t ) * a + t * b;
 }
 
+
+
 static float CbLerpFloatClamped( float a, float b, float t ) {
     t = Clamp01( t );
     return CbFloatLerp(a,b,t);
 }
+
 
 
 static double LerpDoubleClamped( double a, double b, double t ) {
@@ -93,6 +121,10 @@ static float CbLerpDoubleClamped( double a, double b, double t ) {
     t = Clamp01( t );
     return CbFloatLerp(a,b,t);
 }
+
+
+
+
 
 /// <summary>
 /// Normalizes the value within a range. Example: (value = 8, min = 7, max = 24) = (float)0.0588235...
@@ -119,6 +151,10 @@ static double NormalizeDoubleInRange(double value, double minPossibleValue, doub
     return normalizedValue;
 }
 
+#pragma endregion
+
+
+#pragma region CONSTRUCTORS_DESTRUCTORS
 
 /**
 * \brief Constructor
@@ -128,9 +164,24 @@ grng<T>::grng()
 {
     static_assert(std::is_integral<T>::value, "T must be an integral number");
     selectedAlgorithm = 0;
-    seed = 0;
-    seed |= 6256256; //OR so we can 
+    m_gdtSeed = 0;
+    m_gdtSeed |= 6256256;
+    m_udtAlgorithmSelection = Random_Algorithm_AdaptedLehmer32;
     selectedAlgorithm = AdaptedLehmer32;
+}
+
+
+
+/**
+* \brief Constructor
+*/
+template<typename T>
+template<typename U>
+grng<T>::grng(grng<U> grngtoCopy)
+{
+    static_assert(std::is_integral<U>::value, "U must be an integral numbers. Howd you initialize a class without that?");
+    m_gdtSeed = grngtoCopy.GetSeed();
+    SetAlgorithm(grngtoCopy.GetAlgorithm());
 }
 
 
@@ -142,7 +193,8 @@ template<typename T>
 grng<T>::grng(const T newSeed)
 {
     static_assert(std::is_integral<T>::value, "T must be an integral number");
-    seed = newSeed;
+    m_gdtSeed = newSeed;
+    m_udtAlgorithmSelection = Random_Algorithm_AdaptedLehmer32;
     selectedAlgorithm = AdaptedLehmer32;
 }
 
@@ -155,7 +207,10 @@ template<typename T>
 grng<T>::grng(const T newSeed, AlgorithmChoice_t algorithmSelection)
 {
     static_assert(std::is_integral<T>::value, "T must be an integral number");
-    seed = newSeed;
+    m_gdtSeed = newSeed;
+
+    
+
     SetAlgorithm(algorithmSelection);
 }
 
@@ -168,12 +223,15 @@ template<typename T>
 grng<T>::grng(const char* seedPointer)
 {
     selectedAlgorithm = 0;
-    seed = 0;
+    m_gdtSeed = 0;
+    
+    //Set selected algorithm
+    m_udtAlgorithmSelection = Random_Algorithm_AdaptedLehmer32;
 
     //Loop through the seed pointer and create the seed
     while (*seedPointer)
     {
-        seed += (*seedPointer++);
+        m_gdtSeed += (*seedPointer++);
     }
 
     //Set the choice of algorithm
@@ -190,12 +248,13 @@ template<typename T>
 grng<T>::grng(const char* seedPointer, AlgorithmChoice_t algorithmSelection)
 {
     selectedAlgorithm = 0;
-    seed = 0;
+    m_gdtSeed = 0;
+
 
     //Loop through the seed pointer and create the seed
     while (*seedPointer)
     {
-        seed += (*seedPointer++);
+        m_gdtSeed += (*seedPointer++);
     }
 
     //Set the choice of algorithm
@@ -216,7 +275,10 @@ grng<T>::grng(const std::string seedString)
     std::hash<std::string> seedHasher;
 
     //Hash the string and set the seed to it
-    seed = (T)seedHasher(seedString);
+    m_gdtSeed = (T)seedHasher(seedString);
+
+    //Set selected algorithm
+    m_udtAlgorithmSelection = Random_Algorithm_AdaptedLehmer32;
 
     //Set the choice of algorithm
     selectedAlgorithm = AdaptedLehmer32;
@@ -236,7 +298,7 @@ grng<T>::grng(const std::string seedString, AlgorithmChoice_t algorithmSelection
     std::hash<std::string> seedHasher;
 
     //Hash the string and set the seed to it
-    seed = (T)seedHasher(seedString);
+    m_gdtSeed = (T)seedHasher(seedString);
 
     //Set the choice of algorithm
     SetAlgorithm(algorithmSelection);
@@ -250,9 +312,149 @@ grng<T>::grng(const std::string seedString, AlgorithmChoice_t algorithmSelection
 template<typename T>
 grng<T>::~grng()
 {
-    seed = 0;
+    m_gdtSeed = 0;
     selectedAlgorithm = 0;
 }
+
+
+
+#pragma endregion
+
+
+
+#pragma region OPERATOR_OVERLOADS
+
+
+template<typename T>
+void grng<T>::operator=(const grng<T> otherGrng)
+{
+    m_gdtSeed = otherGrng.GetSeed();
+    SetAlgorithm(otherGrng.GetAlgorithm());
+}
+
+
+
+template<typename T>
+void grng<T>::operator=(const T seedToCopy)
+{
+    m_gdtSeed = seedToCopy;
+}
+
+
+
+template<typename T>
+void grng<T>::operator=(const AlgorithmChoice_t selectedAlgorithm)
+{
+    SetAlgorithm(selectedAlgorithm);
+}
+
+
+
+template<typename T>
+bool grng<T>::operator==(const grng<T> otherGrng)
+{
+    if (otherGrng.GetSeed() == m_gdtSeed && otherGrng.GetAlgorithm() == m_udtAlgorithmSelection)
+    {
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+
+
+template<typename T>
+bool grng<T>::operator!=(const grng<T> otherGrng)
+{
+    if (otherGrng.GetSeed() == m_gdtSeed && otherGrng.GetAlgorithm() == m_udtAlgorithmSelection)
+    {
+        return false;
+    }
+    else
+    {
+        return true;
+    }
+}
+
+
+
+template<typename T>
+void grng<T>::operator&=(const grng<T> otherGrng)
+{
+    this.m_gdtSeed &= otherGrng.GetSeed();
+}
+
+
+template<typename T>
+void grng<T>::operator|=(const grng<T> otherGrng)
+{
+    this.m_gdtSeed |= otherGrng.GetSeed();
+}
+
+
+template<typename T>
+void grng<T>::operator^=(const grng<T> otherGrng)
+{
+    m_gdtSeed ^= otherGrng.GetSeed();
+}
+
+
+
+template<typename T>
+bool operator>(const grng<T>& grngLeft, const grng<T>& grngRight)
+{
+    return (grngLeft.GetSeed() > grngRight.GetSeed());
+}
+
+
+
+template<typename T>
+bool operator<(const grng<T>& grngLeft, const grng<T>& grngRight)
+{
+    return (grngLeft.GetSeed() < grngRight.GetSeed());
+}
+
+
+template<typename T>
+bool operator>=(const grng<T>& grngLeft, const grng<T>& grngRight)
+{
+    return (grngLeft.GetSeed() >= grngRight.GetSeed());
+}
+
+
+
+template<typename T>
+bool operator<=(const grng<T>& grngLeft, const grng<T>& grngRight)
+{
+    return (grngLeft.GetSeed() <= grngRight.GetSeed());
+}
+
+
+
+template<typename T>
+T operator&(const grng<T>& grngLeft, const grng<T>& grngRight)
+{
+    return (T)(grngLeft.GetSeed() & grngRight.GetSeed());
+}
+
+template<typename T>
+T operator|(const grng<T>& grngLeft, const grng<T>& grngRight)
+{
+    return (T)(grngLeft.GetSeed() | grngRight.GetSeed());
+}
+
+
+template<typename T>
+T operator^(const grng<T>& grngLeft, const grng<T>& grngRight)
+{
+    return (T)(grngLeft.GetSeed() ^ grngRight.GetSeed());
+}
+
+
+#pragma endregion
+
+
 
 
 
@@ -263,6 +465,10 @@ grng<T>::~grng()
 template<typename T>
 void grng<T>::SetAlgorithm(AlgorithmChoice_t algorithmSelection)
 {
+
+    //Set selected algorithm
+    m_udtAlgorithmSelection = algorithmSelection;
+
     switch(algorithmSelection)
     {
 
@@ -312,11 +518,12 @@ void grng<T>::SetAlgorithm(AlgorithmChoice_t algorithmSelection)
 
 
 
+
 template<typename T>
 T grng<T>::Next()
 {
-    T randVal = selectedAlgorithm(seed);
-    seed = selectedAlgorithm(randVal);
+    T randVal = selectedAlgorithm(m_gdtSeed);
+    m_gdtSeed = selectedAlgorithm(randVal);
     return randVal;
 }
 
@@ -344,8 +551,8 @@ T grng<T>::Range(T minValue, T maxValue)
 template<typename T>
 double grng<T>::NextDouble()
 {
-    T randVal = selectedAlgorithm(seed);
-    seed = selectedAlgorithm(randVal);
+    T randVal = selectedAlgorithm(m_gdtSeed);
+    m_gdtSeed = selectedAlgorithm(randVal);
     return NormalizeDoubleInRange((double)randVal,(double)-0x7fffffff,0x7fffffff);
 }
 
@@ -357,8 +564,8 @@ double grng<T>::NextDouble()
 template<typename T>
 double grng<T>::NextDouble(double maxValue)
 {
-    T randVal = selectedAlgorithm(seed);
-    seed = selectedAlgorithm(randVal);
+    T randVal = selectedAlgorithm(m_gdtSeed);
+    m_gdtSeed = selectedAlgorithm(randVal);
     return NormalizeDoubleInRange((double)randVal,(double)-0x7fffffff,maxValue);
 }
 
@@ -370,8 +577,8 @@ double grng<T>::NextDouble(double maxValue)
 template<typename T>
 float grng<T>::NextFloat()
 {
-    T randVal = selectedAlgorithm(seed);
-    seed = selectedAlgorithm(randVal);
+    T randVal = selectedAlgorithm(m_gdtSeed);
+    m_gdtSeed = selectedAlgorithm(randVal);
     return (float)NormalizeDoubleInRange((double)randVal,(double)-0x7fffffff,(double)0x7fffffff);
 }
 
@@ -383,8 +590,8 @@ float grng<T>::NextFloat()
 template<typename T>
 float grng<T>::NextFloat(float maxFloat)
 {
-    T randVal = selectedAlgorithm(seed);
-    seed = selectedAlgorithm(randVal);
+    T randVal = selectedAlgorithm(m_gdtSeed);
+    m_gdtSeed = selectedAlgorithm(randVal);
     return (float)NormalizeDoubleInRange((double)randVal,(double)-0x7fffffff,(double)maxFloat);
 }
 
@@ -396,8 +603,8 @@ float grng<T>::NextFloat(float maxFloat)
 template<typename T>
 int grng<T>::NextInt()
 {
-    T randVal = selectedAlgorithm(seed);
-    seed = selectedAlgorithm(randVal);
+    T randVal = selectedAlgorithm(m_gdtSeed);
+    m_gdtSeed = selectedAlgorithm(randVal);
     return (int) randVal;
 }
 
@@ -469,8 +676,8 @@ int grng<T>::RangeInt(int minValue, int maxValue) {
 */
 template<typename T>
 float grng<T>::NextPercentage() {
-    int randVal = selectedAlgorithm(seed);
-    seed = selectedAlgorithm(randVal);
+    int randVal = selectedAlgorithm(m_gdtSeed);
+    m_gdtSeed = selectedAlgorithm(randVal);
     return RangeFloat(0.0f,100.0f);
 }
 
@@ -578,6 +785,7 @@ float grng<T>::LowerBiasValue(float strength) {
 }
 
 
+
 /**
  * @brief Creates a value weighted towards 1
  * @param strength The strength of the weight, between 0 and 1
@@ -587,6 +795,7 @@ float grng<T>::LowerBiasValue(float strength) {
 float grng<T>::UpperBiasValue(float strength) {
      return  (1 - LowerBiasValue((strength)));
 }
+
 
 
 /**
@@ -665,7 +874,7 @@ template<typename T>
 long grng<T>::ValueNoise3DInt(int x, int y, int z, int seedValue)
 {
     long n = (NextInt() * x + NextInt() * y + NextInt() * z +
-                seed * seedValue) & 0x7fffffff;
+                m_gdtSeed * seedValue) & 0x7fffffff;
     n = (n >> 13) ^ n;
     return (n * (n * n * 60493 + 19990303) + 1376312589) & 0x7fffffff;
 }
@@ -678,7 +887,7 @@ template<typename T>
 long grng<T>::ValueNoise2DInt(int x, int y, int seedValue)
 {
     long n = (NextInt() * x + NextInt() * y +
-                seed * seedValue) & 0x7fffffff;
+                m_gdtSeed * seedValue) & 0x7fffffff;
     n = (n >> 13) ^ n;
     return (n * (n * n * 60493 + 19990303) + 1376312589) & 0x7fffffff;
 }
@@ -690,7 +899,7 @@ long grng<T>::ValueNoise2DInt(int x, int y, int seedValue)
 template<typename T>
 long grng<T>::ValueNoise1DInt(int x, int seedValue)
 {
-    long n = (NextInt() * x + seed * seedValue) & 0x7fffffff;
+    long n = (NextInt() * x + m_gdtSeed * seedValue) & 0x7fffffff;
     n = (n >> 13) ^ n;
     return (n * (n * n * 60493 + 19990303) + 1376312589) & 0x7fffffff;
 }
@@ -726,6 +935,7 @@ double grng<T>::ValueNoise1D(int x, int seedValue)
 }
 
 
+
 /// <summary>
 /// Returns the output value for the given input coordinates.
 /// </summary>
@@ -741,7 +951,7 @@ double grng<T>::Voronoi1D(double x, double frequency, bool useDistance, double d
 
         for (double xcu = xi - 2; xcu <= xi + 2; xcu++)
         {
-            double xp = xcu + ValueNoise1D(xcu, seed);
+            double xp = xcu + ValueNoise1D(xcu, m_gdtSeed);
             double xd = xp - x;
             double d = xd * xd;
             if (d < md)
@@ -789,8 +999,8 @@ double grng<T>::Voronoi2D(double x, double y, double frequency, bool useDistance
     {
         for (double xcu = xi - 2; xcu <= xi + 2; xcu++)
         {
-            double xp = xcu + ValueNoise2D(xcu, ycu, seed);
-            double yp = ycu + ValueNoise2D(xcu, ycu, seed + 1);
+            double xp = xcu + ValueNoise2D(xcu, ycu, m_gdtSeed);
+            double yp = ycu + ValueNoise2D(xcu, ycu, m_gdtSeed + 1);
             double xd = xp - x;
             double yd = yp - y;
             double d = xd * xd + yd * yd;
@@ -819,6 +1029,7 @@ double grng<T>::Voronoi2D(double x, double y, double frequency, bool useDistance
 }
 
 
+
 /// <summary>
 /// Returns the output value for the given input coordinates.
 /// </summary>
@@ -845,9 +1056,9 @@ double grng<T>::Voronoi3D(double x, double y, double z, double frequency, bool u
         {
             for (double xcu = xi - 2; xcu <= xi + 2; xcu++)
             {
-                double xp = xcu + ValueNoise3D(xcu, ycu, zcu, seed);
-                double yp = ycu + ValueNoise3D(xcu, ycu, zcu, seed + 1);
-                double zp = zcu + ValueNoise3D(xcu, ycu, zcu, seed + 2);
+                double xp = xcu + ValueNoise3D(xcu, ycu, zcu, m_gdtSeed);
+                double yp = ycu + ValueNoise3D(xcu, ycu, zcu, m_gdtSeed + 1);
+                double zp = zcu + ValueNoise3D(xcu, ycu, zcu, m_gdtSeed + 2);
                 double xd = xp - x;
                 double yd = yp - y;
                 double zd = zp - z;
@@ -1151,26 +1362,24 @@ unsigned int* grng<T>::CreatePermutationTable(unsigned int tableSize, unsigned i
 /// <summary>
 /// Creates a permutation table with defaults of length 512 with values from 0 - 255 inclusive
 /// </summary>
-/// <param name="tableSize"></param>
-/// <param name="maxSize"></param>
 /// <returns>A new permutation table</returns>
 template<typename T>
 unsigned int* grng<T>::CreatePermutationTable() {
 
     unsigned int newPermutation[512] = {0};
-    if(255 > 0 && 512 > 0)
-    {
-        for(int i = 0, j = 0; i < 512; i++) {
-            if(i > 255) {
-                newPermutation[i] = newPermutation[j];
-                j++;
-            }
-            else {
-                newPermutation[i] = i;
-            }
-        }
 
+    for(int i = 0, j = 0; i < 512; i++) {
+        if(i > 255) {
+            newPermutation[i] = newPermutation[j];
+            j++;
+        }
+        else {
+            newPermutation[i] = i;
+        }
     }
+
+    Shuffle(newPermutation);
+    
     return newPermutation;
 }
 
@@ -1362,6 +1571,7 @@ T grng<T>::SmallestRandom(int iterations) {
 }
 
 
+
 /// <summary>
 /// Returns the largest value in x iterations
 /// </summary>
@@ -1398,19 +1608,28 @@ T grng<T>::MostCenteredRandom(int iterations) {
 
 
 
-
+/**
+* \brief Returns a random element from the array
+*
+*/
 template<typename T>
-T grng<T>::Element(T a[])
+template<typename U>
+U grng<T>::Element(U a[])
 {
-    return a[RangeInt(0, (sizeof(a) / sizeof(T))-1)];
+    return a[RangeInt(0, (sizeof(a) / sizeof(U))-1)];
 }
 
 
 
+/**
+* \brief Shuffles the array into a random order
+*
+*/
 template<typename T>
-void grng<T>::Shuffle(T a[])
+template<typename U>
+void grng<T>::Shuffle(U a[])
 {
-    int aCount = (sizeof(a) / sizeof(T));
+    int aCount = (sizeof(a) / sizeof(U));
     for(int i = 0; i < aCount; i++) {
         int j = RangeInt(i,aCount-1);
         T temp = a[j];

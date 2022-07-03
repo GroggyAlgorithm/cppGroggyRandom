@@ -60,8 +60,12 @@ private:
 
 
 protected:
+
     ///Seed for the random number generator
-    T seed;
+    T m_gdtSeed;
+
+    ///Algorithm selection. Helpful for checking what algorithm is active and to copy object
+    AlgorithmChoice_t m_udtAlgorithmSelection;
 
     ///The algorithm selected
     T(*selectedAlgorithm)(T);
@@ -70,8 +74,30 @@ protected:
 
 
 public:
+    void operator=(const grng<T> otherGrng);
+    void operator=(const T seedToCopy);
+    void operator=(const AlgorithmChoice_t selectedAlgorithm);
+    bool operator==(const grng<T> otherGrng);
+    bool operator!=(const grng<T> otherGrng);
+    void operator&=(const grng<T> otherGrng);
+    void operator|=(const grng<T> otherGrng);
+    void operator^=(const grng<T> otherGrng);
+
+    friend bool operator>(const grng<T>& grngLeft, const grng<T>& grngRight);
+    friend bool operator<(const grng<T>& grngLeft, const grng<T>& grngRight);
+    friend bool operator>=(const grng<T>& grngLeft, const grng<T>& grngRight);
+    friend bool operator<=(const grng<T>& grngLeft, const grng<T>& grngRight);
+    friend T operator&(const grng<T>& grngLeft, const grng<T>& grngRight);
+    friend T operator|(const grng<T>& grngLeft, const grng<T>& grngRight);
+    friend T operator^(const grng<T>& grngLeft, const grng<T>& grngRight);
+    
+
 
     grng();
+
+    template<typename U>
+    grng(const grng<U> grngtoCopy);
+    
     grng(const T newSeed);
     grng(const char* seedPointer);
     grng(const char* seedPointer, AlgorithmChoice_t algorithmSelection);
@@ -80,20 +106,33 @@ public:
     grng(const T newSeed, AlgorithmChoice_t algorithmSelection);
     ~grng();
 
-
+    /**
+    * \brief Sets this objects seed to the seed passed
+    */
     inline void SetSeed(const T newSeed)
     {
         static_assert(std::is_integral<T>::value, "T must be an integral number");
-        seed = newSeed;
+        m_gdtSeed = newSeed;
     }
 
-    //void SetSeed(T newSeed);
+    /**
+    * \brief Returns this objects seed
+    */
     const inline T GetSeed()
     {
-        return seed;
+        return m_gdtSeed;
     }
 
     void SetAlgorithm(AlgorithmChoice_t algorithmSelection);
+
+    /**
+    * \brief Gets the classes random algorithm
+    */
+    const inline AlgorithmChoice_t GetAlgorithm()
+    {
+        return m_udtAlgorithmSelection;
+    }
+
     T Next();
     T Next(T maxValue);
     T Range(T minValue, T maxValue);
@@ -148,8 +187,12 @@ public:
     T SmallestRandom(int iterations);
     T LargestRandom(int iterations);
     T MostCenteredRandom(int iterations);
-    T Element(T a[]);
-    void Shuffle(T a[]);
+
+    template<typename U>
+    U Element(U a[]);
+    
+    template<typename U>
+    void Shuffle(U a[]);
 };
 
 
@@ -160,5 +203,137 @@ public:
 
 #endif // GRNG_H_INCLUDED
 
-
-
+//
+//
+//#pragma region OPERATOR_OVERLOADS
+//
+//
+//template<typename T>
+//void grng<T>::operator=(const grng<T> otherGrng)
+//{
+//    m_gdtSeed = otherGrng.GetSeed();
+//    SetAlgorithm(otherGrng.GetAlgorithm());
+//}
+//
+//
+//
+//template<typename T>
+//void grng<T>::operator=(const T seedToCopy)
+//{
+//    m_gdtSeed = seedToCopy;
+//}
+//
+//
+//
+//template<typename T>
+//void grng<T>::operator=(const AlgorithmChoice_t selectedAlgorithm)
+//{
+//    SetAlgorithm(selectedAlgorithm);
+//}
+//
+//
+//
+//template<typename T>
+//bool grng<T>::operator==(const grng<T> otherGrng)
+//{
+//    if (otherGrng.GetSeed() == m_gdtSeed && otherGrng.GetAlgorithm() == m_udtAlgorithmSelection)
+//    {
+//        return true;
+//    }
+//    else
+//    {
+//        return false;
+//    }
+//}
+//
+//
+//template<typename T>
+//bool grng<T>::operator!=(const grng<T> otherGrng)
+//{
+//    if (otherGrng.GetSeed() == m_gdtSeed && otherGrng.GetAlgorithm() == m_udtAlgorithmSelection)
+//    {
+//        return false;
+//    }
+//    else
+//    {
+//        return true;
+//    }
+//}
+//
+//
+//
+//template<typename T>
+//void grng<T>::operator&=(const grng<T> otherGrng)
+//{
+//    this.m_gdtSeed &= otherGrng.GetSeed();
+//}
+//
+//
+//template<typename T>
+//void grng<T>::operator|=(const grng<T> otherGrng)
+//{
+//    this.m_gdtSeed |= otherGrng.GetSeed();
+//}
+//
+//
+//template<typename T>
+//void grng<T>::operator^=(const grng<T> otherGrng)
+//{
+//    m_gdtSeed ^= otherGrng.GetSeed();
+//}
+//
+//
+//
+//template<typename T>
+//bool operator>(const grng<T>& grngLeft, const grng<T>& grngRight)
+//{
+//    return (grngLeft.GetSeed() > grngRight.GetSeed());
+//}
+//
+//
+//
+//template<typename T>
+//bool operator<(const grng<T>& grngLeft, const grng<T>& grngRight)
+//{
+//    return (grngLeft.GetSeed() < grngRight.GetSeed());
+//}
+//
+//
+//template<typename T>
+//bool operator>=(const grng<T>& grngLeft, const grng<T>& grngRight)
+//{
+//    return (grngLeft.GetSeed() >= grngRight.GetSeed());
+//}
+//
+//
+//
+//template<typename T>
+//bool operator<=(const grng<T>& grngLeft, const grng<T>& grngRight)
+//{
+//    return (grngLeft.GetSeed() <= grngRight.GetSeed());
+//}
+//
+//
+//
+//template<typename T>
+//T operator&(const grng<T>& grngLeft, const grng<T>& grngRight)
+//{
+//    return (T)(grngLeft.GetSeed() & grngRight.GetSeed());
+//}
+//
+//template<typename T>
+//T operator|(const grng<T>& grngLeft, const grng<T>& grngRight)
+//{
+//    return (T)(grngLeft.GetSeed() | grngRight.GetSeed());
+//}
+//
+//
+//template<typename T>
+//T operator^(const grng<T>& grngLeft, const grng<T>& grngRight)
+//{
+//    return (T)(grngLeft.GetSeed() ^ grngRight.GetSeed());
+//}
+//
+//
+//#pragma endregion
+//
