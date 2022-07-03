@@ -8,6 +8,9 @@
 #define GRNG_H_INCLUDED
 
 #include <math.h>
+#include <cmath>
+#include <string>
+#include <functional>
 #include <stddef.h>
 #include <type_traits>
 #include "grandomAlgorithms.h"
@@ -69,14 +72,18 @@ protected:
 public:
 
     grng();
-    grng(const T seed);
-    grng(const T seed, AlgorithmChoice_t algorithmSelection);
+    grng(const T newSeed);
+    grng(const char* seedPointer);
+    grng(const char* seedPointer, AlgorithmChoice_t algorithmSelection);
+    grng(const std::string seedString);
+    grng(const std::string seedString, AlgorithmChoice_t algorithmSelection);
+    grng(const T newSeed, AlgorithmChoice_t algorithmSelection);
     ~grng();
 
 
     inline void SetSeed(const T newSeed)
     {
-        static_assert(std::is_integral<T>::value, "T must be numeric");
+        static_assert(std::is_integral<T>::value, "T must be an integral number");
         seed = newSeed;
     }
 

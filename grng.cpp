@@ -126,9 +126,10 @@ static double NormalizeDoubleInRange(double value, double minPossibleValue, doub
 template<typename T>
 grng<T>::grng()
 {
-
+    static_assert(std::is_integral<T>::value, "T must be an integral number");
     selectedAlgorithm = 0;
-    seed = (int)6256256;
+    seed = 0;
+    seed |= 6256256; //OR so we can 
     selectedAlgorithm = AdaptedLehmer32;
 }
 
@@ -140,7 +141,7 @@ grng<T>::grng()
 template<typename T>
 grng<T>::grng(const T newSeed)
 {
-    static_assert(std::is_integral<T>::value, "T must be numeric");
+    static_assert(std::is_integral<T>::value, "T must be an integral number");
     seed = newSeed;
     selectedAlgorithm = AdaptedLehmer32;
 }
@@ -153,8 +154,91 @@ grng<T>::grng(const T newSeed)
 template<typename T>
 grng<T>::grng(const T newSeed, AlgorithmChoice_t algorithmSelection)
 {
-    static_assert(std::is_integral<T>::value, "T must be numeric");
+    static_assert(std::is_integral<T>::value, "T must be an integral number");
     seed = newSeed;
+    SetAlgorithm(algorithmSelection);
+}
+
+
+
+/**
+* \brief Constructor
+*/
+template<typename T>
+grng<T>::grng(const char* seedPointer)
+{
+    selectedAlgorithm = 0;
+    seed = 0;
+
+    //Loop through the seed pointer and create the seed
+    while (*seedPointer)
+    {
+        seed += (*seedPointer++);// << (index * 8)); //This should work?
+    }
+
+    //Set the choice of algorithm
+    selectedAlgorithm = AdaptedLehmer32;
+
+}
+
+
+
+/**
+* \brief Constructor
+*/
+template<typename T>
+grng<T>::grng(const char* seedPointer, AlgorithmChoice_t algorithmSelection)
+{
+    selectedAlgorithm = 0;
+    seed = 0;
+
+    //Loop through the seed pointer and create the seed
+    while (*seedPointer)
+    {
+        seed += (*seedPointer++);
+    }
+
+    //Set the choice of algorithm
+    SetAlgorithm(algorithmSelection);
+
+}
+
+
+
+/// <summary>
+/// Constructor
+/// </summary>
+/// <param name="seedString"></param>
+template<typename T>
+grng<T>::grng(const std::string seedString)
+{
+    //Declare a hasher for hashing the string
+    std::hash<std::string> seedHasher;
+
+    //Hash the string and set the seed to it
+    seed = (T)seedHasher(seedString);
+
+    //Set the choice of algorithm
+    selectedAlgorithm = AdaptedLehmer32;
+}
+
+
+
+/// <summary>
+/// Constructor
+/// </summary>
+/// <param name="seedString"></param>
+/// <param name="algorithmSelection"></param>
+template<typename T>
+grng<T>::grng(const std::string seedString, AlgorithmChoice_t algorithmSelection)
+{
+    //Declare a hasher for hashing the string
+    std::hash<std::string> seedHasher;
+
+    //Hash the string and set the seed to it
+    seed = (T)seedHasher(seedString);
+
+    //Set the choice of algorithm
     SetAlgorithm(algorithmSelection);
 }
 
@@ -336,7 +420,8 @@ int grng<T>::NextInt(int maxInt)
 template<typename T>
 bool grng<T>::NextBool()
 {
-    return ((NextFloat() > 0.5f) ? true : false);
+    float nxtFloat = NextFloat();
+    return ((nxtFloat > 0.5f) ? true : false);
 }
 
 
