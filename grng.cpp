@@ -173,7 +173,7 @@ grng<T>::grng(const char* seedPointer)
     //Loop through the seed pointer and create the seed
     while (*seedPointer)
     {
-        seed += (*seedPointer++);// << (index * 8)); //This should work?
+        seed += (*seedPointer++);
     }
 
     //Set the choice of algorithm
