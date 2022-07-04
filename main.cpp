@@ -176,62 +176,7 @@ int main()
         
     }
 
-    //
-    //
-
-    //std::cout << "Seed Phrase: Hello World!" << "\n";
-    //std::cout << "Seed: " << g.GetSeed() << "\n";
-    //
-    //std::cout << "NextInt: "<< g.NextInt() << "\n";
-    //std::cout << "NextInt: "<< g.NextInt() << "\n";
-    //std::cout << "NextInt: " << g.NextInt() << "\n";
-    //std::cout << "NextDouble: " <<g.NextDouble() << "\n";
-    //std::cout << "NextFloat: " <<g.NextFloat() << "\n";
-    //std::cout << "NextPercentage: " <<g.NextPercentage() << "%\n";
-    //std::cout << "NextPercentage: " <<g.NextPercentage() << "%\n";
-    //std::cout << "NextPercentage: " <<g.NextPercentage() << "%\n";
-    //std::cout << "NextBool: " << (g.NextBool() ? "True": "False") << "\n";
-    //std::cout << "NextBool: " << (g.NextBool() ? "True": "False") << "\n";
-    //std::cout << "NextBool: " << (g.NextBool() ? "True": "False") << "\n";
-    //std::cout << "NextBool: " << (g.NextBool() ? "True": "False") << "\n";
-    //std::cout << "NextBool: " << (g.NextBool() ? "True": "False") << "\n";
-    //std::cout << "NextBool: " << (g.NextBool() ? "True": "False") << "\n";
-    //std::cout << "NextBool: " << (g.NextBool() ? "True": "False") << "\n";
-    //std::cout << "NextBool: " << (g.NextBool() ? "True" : "False") << "\n";
-    //std::cout << "Gaussian: " << g.Gaussian(3, 6) << "\n";
-    //std::cout << "Improved Noise: " << g.ImprovedNoise(1,1,1) << "\n";
-    //std::cout << "Improved Noise: " << g.ImprovedNoise(1,2,1) << "\n";
-    //std::cout << "Improved Noise: " << g.ImprovedNoise(1,3,1) << "\n";
-    //std::cout << "Improved Noise: " << g.ImprovedNoise(2,1,1) << "\n";
-    //std::cout << "Voronoi2D: " << g.Voronoi2D(1, 2, 1, true, 5) << "\n";
-    //std::cout << "\nVoronoi fun: " << "\n\n";
-    //
-    //for (int y = 0; y < 32; y++)
-    //{
-    //    std::cout << std::endl;
-    //    for (int x = 0; x < 64; x++)
-    //    {
-    //        double currentVal = g.Voronoi2D(x, y, g.NextDouble(), true, g.Gaussian(5,3.0f));
-    //        
-    //        //double currentVal = g.Voronoi2D(x, y, g.NextDouble(), false, 5);
-    //        if (currentVal > 0)
-    //        {
-    //            if (currentVal > 2)
-    //            {
-    //                std::cout << "^";
-    //            }
-    //            else
-    //            {
-    //                if(g.NextBool()) std::cout << "@";
-    //                else std::cout << "~";
-    //            }
-    //        }
-    //        else
-    //        {
-    //            std::cout << " ";
-    //        }
-    //    }
-    //}
+    
 
     
     std::cout << std::flush << std::endl;
