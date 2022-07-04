@@ -193,6 +193,8 @@ public:
     
     template<typename U>
     void Shuffle(U a[]);
+
+    bool ChanceRoll(const float percentageChance);
 };
 
 

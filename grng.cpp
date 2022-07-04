@@ -566,7 +566,7 @@ double grng<T>::NextDouble(double maxValue)
 {
     T randVal = selectedAlgorithm(m_gdtSeed);
     m_gdtSeed = selectedAlgorithm(randVal);
-    return NormalizeDoubleInRange((double)randVal,(double)-0x7fffffff,maxValue);
+    return NormalizeDoubleInRange((double)randVal,(double)-0x7fffffff,(double)maxValue);
 }
 
 
@@ -639,7 +639,13 @@ bool grng<T>::NextBool()
 template<typename T>
 double grng<T>::RangeDouble(double minValue, double maxValue) {
     double randVal = NextDouble();
-    return (double)NormalizeDoubleInRange((double)randVal,(double)minValue,(double)maxValue);
+    if (randVal > maxValue) randVal = maxValue;
+    else if (randVal < minValue) randVal = minValue;
+    else
+    {
+        randVal = (1 - randVal) * minValue + randVal * maxValue;
+    }
+    return randVal;
 }
 
 
@@ -1640,6 +1646,33 @@ void grng<T>::Shuffle(U a[])
 
 
 
+/**
+* \brief If the value is greater than the passed chance percentage, false, else true
+*/
+template<typename T>
+bool grng<T>::ChanceRoll(const float percentageChance)
+{
+    bool chance = false;
+    float checkChance = percentageChance;
+    if (checkChance > 1)
+    {
+        checkChance /= 100;
+        if (NextFloat() > checkChance)
+        {
+            chance = true;
+        }
+    }
+    else if (checkChance > 0)
+    {
+        if (NextFloat() > checkChance)
+        {
+            chance = true;
+        }
+    }
+
+
+    return chance;
+}
 
 
 
