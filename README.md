@@ -39,7 +39,7 @@ I have about a dozen other files I'd like to add to this project. </hr>
 This mostly includes a series of noise classes. A perlin noise class is included in this, it works significantly better than the perlin functions I </hr>
 created in grng.cpp. I just need to port those classes in from C#. </hr>
  </hr>
-Additionally, I need to finish the dll files.
+Additionally, I need to finish dll related files.
 
 </p>
 
